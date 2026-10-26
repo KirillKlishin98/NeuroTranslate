@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "catalogStatus": "metadata-verified-runtime-not-integrated",
+  "models": [
+    {
+      "id": "en-ru",
+      "sourceLanguage": "en",
+      "targetLanguage": "ru",
+      "architecture": "MarianMTModel",
+      "license": "Apache-2.0",
+      "licenseSource": "https://huggingface.co/Helsinki-NLP/opus-mt-en-ru",
+      "upstreamModel": {
+        "repository": "Helsinki-NLP/opus-mt-en-ru",
+        "revision": "bb09c99d180016eac6819df3dae68edb1690fdee"
+      },
+      "onnxRepository": {
+        "repository": "Xenova/opus-mt-en-ru",
+        "revision": "88735d14188d480cade09dce9f662e60e86effbf"
+      },
+      "configuration": {
+        "modelType": "marian",
+        "dModel": 512,
+        "vocabularySize": 62518,
+        "decoderStartTokenId": 62517,
+        "eosTokenId": 0,
+        "padTokenId": 62517,
+        "maxLength": 512,
+        "encoderLayers": 6,
+        "decoderLayers": 6
+      },
+      "onnx": {
+        "opset": 11,
+        "quantization": "QInt8",
+        "files": [
+          {
+            "path": "onnx/encoder_model_quantized.onnx",
+            "sizeBytes": 51628446,
+            "sha256": "97f28d8295d231b7da721ded06fa8c034787df2122cd8f85b904abdc4d15bd53",
+            "inputs": [
+              { "name": "input_ids", "dtype": "int64", "shape": ["batch_size", "encoder_sequence_length"] },
+              { "name": "attention_mask", "dtype": "int64", "shape": ["batch_size", "encoder_sequence_length"] }
+            ],
+            "outputs": [
+              { "name": "last_hidden_state", "dtype": "float32", "shape": ["batch_size", "encoder_sequence_length", 512] }
+            ]
+          },
+          {
+            "path": "onnx/decoder_model_quantized.onnx",
+            "sizeBytes": 58560874,
+            "sha256": "7e4e602c31130176b086cd4bf31d6d08d44a6a367617e910870e0ea3e5408574",
+            "inputs": [
+              { "name": "encoder_attention_mask", "dtype": "int64", "shape": ["batch_size", "encoder_sequence_length"] },
+              { "name": "input_ids", "dtype": "int64", "shape": ["batch_size", "decoder_sequence_length"] },
+              { "name": "encoder_hidden_states", "dtype": "float32", "shape": ["batch_size", "encoder_sequence_length", 512] }
+            ],
+            "outputs": [
+              { "name": "logits", "dtype": "float32", "shape": ["batch_size", "decoder_sequence_length", 62518] },
+              { "namePattern": "present.*", "count": 24, "description": "Decoder and encoder key/value cache outputs; 6 layers, 8 heads, head size 64." }
+            ]
+          }
+        ],
+        "onnxFilesBytes": 110189320
+      },
+      "tokenizer": {
+        "type": "Marian SentencePiece",
+        "filesToValidate": ["source.spm", "target.spm", "tokenizer.json", "tokenizer_config.json", "vocab.json", "special_tokens_map.json"],
+        "validationStatus": "pending-day-5-tokenizer-parity"
+      }
+    },
+    {
+      "id": "ru-en",
+      "sourceLanguage": "ru",
+      "targetLanguage": "en",
+      "architecture": "MarianMTModel",
+      "license": "CC-BY-4.0",
+      "licenseSource": "https://huggingface.co/Helsinki-NLP/opus-mt-ru-en",
+      "upstreamModel": {
+        "repository": "Helsinki-NLP/opus-mt-ru-en",
+        "revision": "fbd6dc73284f95536648512cc21d57f19191961a"
+      },
+      "onnxRepository": {
+        "repository": "Xenova/opus-mt-ru-en",
+        "revision": "4c3e82163683bb911e3803469ebdee03c8b65f0a"
+      },
+      "configuration": {
+        "modelType": "marian",
+        "dModel": 512,
+        "vocabularySize": 62518,
+        "decoderStartTokenId": 62517,
+        "eosTokenId": 0,
+        "padTokenId": 62517,
+        "maxLength": 512,
+        "encoderLayers": 6,
+        "decoderLayers": 6
+      },
+      "onnx": {
+        "opset": 11,
+        "quantization": "QInt8",
+        "files": [
+          {
+            "path": "onnx/encoder_model_quantized.onnx",
+            "sizeBytes": 51628446,
+            "sha256": "c10df0466540534bb70c4402d539c349b8bfa9968184cad89f51408cf13e7eb7",
+            "inputs": [
+              { "name": "input_ids", "dtype": "int64", "shape": ["batch_size", "encoder_sequence_length"] },
+              { "name": "attention_mask", "dtype": "int64", "shape": ["batch_size", "encoder_sequence_length"] }
+            ],
+            "outputs": [
+              { "name": "last_hidden_state", "dtype": "float32", "shape": ["batch_size", "encoder_sequence_length", 512] }
+            ]
+          },
+          {
+            "path": "onnx/decoder_model_quantized.onnx",
+            "sizeBytes": 58560874,
+            "sha256": "d880abf58612013815554ef55c98d0f28b68190b2cb6f65c39d6e834f51dda8c",
+            "inputs": [
+              { "name": "encoder_attention_mask", "dtype": "int64", "shape": ["batch_size", "encoder_sequence_length"] },
+              { "name": "input_ids", "dtype": "int64", "shape": ["batch_size", "decoder_sequence_length"] },
+              { "name": "encoder_hidden_states", "dtype": "float32", "shape": ["batch_size", "encoder_sequence_length", 512] }
+            ],
+            "outputs": [
+              { "name": "logits", "dtype": "float32", "shape": ["batch_size", "decoder_sequence_length", 62518] },
+              { "namePattern": "present.*", "count": 24, "description": "Decoder and encoder key/value cache outputs; 6 layers, 8 heads, head size 64." }
+            ]
+          }
+        ],
+        "onnxFilesBytes": 110189320
+      },
+      "tokenizer": {
+        "type": "Marian SentencePiece",
+        "filesToValidate": ["source.spm", "target.spm", "tokenizer.json", "tokenizer_config.json", "vocab.json", "special_tokens_map.json"],
+        "validationStatus": "pending-day-5-tokenizer-parity"
+      }
+    }
+  ]
+}
