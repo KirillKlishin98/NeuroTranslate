@@ -1,6 +1,10 @@
 {
   "schemaVersion": 1,
-  "catalogStatus": "metadata-verified-runtime-not-integrated",
+  "catalogStatus": "onnx-engine-implemented-translation-flow-not-integrated",
+  "runtime": {
+    "artifact": "com.microsoft.onnxruntime:onnxruntime-android",
+    "version": "1.31.0"
+  },
   "models": [
     {
       "id": "en-ru",
