@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogStatus": "onnx-engine-implemented-translation-flow-not-integrated",
+  "catalogStatus": "sentencepiece-assets-and-reference-fixtures-verified-tokenizer-runtime-not-integrated",
   "runtime": {
     "artifact": "com.microsoft.onnxruntime:onnxruntime-android",
     "version": "1.31.0"
@@ -68,7 +68,25 @@
       "tokenizer": {
         "type": "Marian SentencePiece",
         "filesToValidate": ["source.spm", "target.spm", "tokenizer.json", "tokenizer_config.json", "vocab.json", "special_tokens_map.json"],
-        "validationStatus": "pending-day-5-tokenizer-parity"
+        "source": {
+          "path": "source.spm",
+          "sizeBytes": 802781,
+          "sha256": "16bebef1389a0b8ab452772c4e35b9e605e5713f8ac7baa71ca701394eaa086d"
+        },
+        "target": {
+          "path": "target.spm",
+          "sizeBytes": 1080169,
+          "sha256": "745998e51ba5b058e38b7ac7765c25c43ed5c1c39cc92b27163b9b2e323c9d7c"
+        },
+        "reference": {
+          "implementation": "Hugging Face Transformers MarianTokenizer",
+          "version": "4.41.2",
+          "sentencepieceVersion": "0.2.0",
+          "sacremosesVersion": "0.1.1",
+          "fixtures": "app/src/test/resources/marian-tokenizer-reference.json",
+          "caseCount": 100
+        },
+        "validationStatus": "source-target-spm-hashes-verified-reference-fixtures-generated-runtime-parity-pending"
       }
     },
     {
@@ -133,7 +151,25 @@
       "tokenizer": {
         "type": "Marian SentencePiece",
         "filesToValidate": ["source.spm", "target.spm", "tokenizer.json", "tokenizer_config.json", "vocab.json", "special_tokens_map.json"],
-        "validationStatus": "pending-day-5-tokenizer-parity"
+        "source": {
+          "path": "source.spm",
+          "sizeBytes": 1080169,
+          "sha256": "745998e51ba5b058e38b7ac7765c25c43ed5c1c39cc92b27163b9b2e323c9d7c"
+        },
+        "target": {
+          "path": "target.spm",
+          "sizeBytes": 802781,
+          "sha256": "16bebef1389a0b8ab452772c4e35b9e605e5713f8ac7baa71ca701394eaa086d"
+        },
+        "reference": {
+          "implementation": "Hugging Face Transformers MarianTokenizer",
+          "version": "4.41.2",
+          "sentencepieceVersion": "0.2.0",
+          "sacremosesVersion": "0.1.1",
+          "fixtures": "app/src/test/resources/marian-tokenizer-reference.json",
+          "caseCount": 100
+        },
+        "validationStatus": "source-target-spm-hashes-verified-reference-fixtures-generated-runtime-parity-pending"
       }
     }
   ]
