@@ -31,6 +31,14 @@
     <string name="model_not_installed">Не установлена</string>
     <string name="model_installed">Установлена</string>
     <string name="model_install_unavailable">Установка появится позже</string>
+    <string name="model_package_size">Размер пакета: %1$d МБ</string>
+    <string name="model_install">Установить пакет</string>
+    <string name="model_cancel_download">Отменить загрузку</string>
+    <string name="model_download_progress">Загружено: %1$d%%</string>
+    <string name="model_remove">Удалить пакет</string>
+    <string name="model_removing">Удаление…</string>
+    <string name="model_download_failed">Не удалось установить пакет. Проверьте соединение или свободное место и повторите попытку.</string>
+    <string name="model_delete_failed">Не удалось удалить пакет.</string>
     <string name="model_ru_en">Русский → Английский</string>
     <string name="model_en_ru">Английский → Русский</string>
     <string name="settings_appearance">Внешний вид</string>

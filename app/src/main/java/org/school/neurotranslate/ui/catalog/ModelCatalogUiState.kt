@@ -8,15 +8,18 @@ enum class ModelDirection {
 data class ModelCatalogItem(
     val id: String,
     val direction: ModelDirection,
-    val isInstalled: Boolean = false
+    val packageSizeBytes: Long,
+    val isInstalled: Boolean = false,
+    val isDownloading: Boolean = false,
+    val isDeleting: Boolean = false,
+    val downloadProgress: Float = 0f,
+    val errorMessage: String? = null
 )
 
 data class ModelCatalogUiState(
-    val items: List<ModelCatalogItem> = listOf(
-        ModelCatalogItem(id = "opus-mt-ru-en", direction = ModelDirection.RussianToEnglish),
-        ModelCatalogItem(id = "opus-mt-en-ru", direction = ModelDirection.EnglishToRussian)
-    ),
+    val items: List<ModelCatalogItem> = emptyList(),
     val installedCount: Int = 0,
     val diskUsageMegabytes: Int = 0,
-    val activeModelMemoryMegabytes: Int? = null
+    val activeModelMemoryMegabytes: Int? = null,
+    val isLoading: Boolean = true
 )

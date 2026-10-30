@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -31,7 +32,12 @@ import androidx.compose.ui.unit.dp
 import org.school.neurotranslate.R
 
 @Composable
-fun ModelCatalogScreen(state: ModelCatalogUiState) {
+fun ModelCatalogScreen(
+    state: ModelCatalogUiState,
+    onInstall: (String) -> Unit,
+    onCancelDownload: (String) -> Unit,
+    onRemove: (String) -> Unit
+) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
@@ -62,7 +68,12 @@ fun ModelCatalogScreen(state: ModelCatalogUiState) {
                 StorageSummaryCard(state = state)
             }
             items(state.items, key = ModelCatalogItem::id) { item ->
-                ModelCard(item = item)
+                ModelCard(
+                    item = item,
+                    onInstall = { onInstall(item.id) },
+                    onCancelDownload = { onCancelDownload(item.id) },
+                    onRemove = { onRemove(item.id) }
+                )
             }
         }
     }
@@ -120,7 +131,12 @@ private fun Metric(
 }
 
 @Composable
-private fun ModelCard(item: ModelCatalogItem) {
+private fun ModelCard(
+    item: ModelCatalogItem,
+    onInstall: () -> Unit,
+    onCancelDownload: () -> Unit,
+    onRemove: () -> Unit
+) {
     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -156,11 +172,47 @@ private fun ModelCard(item: ModelCatalogItem) {
                     }
                 )
             }
-            if (!item.isInstalled) {
-                Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.model_install_unavailable))
+            Text(
+                text = stringResource(R.string.model_package_size, ((item.packageSizeBytes + BYTES_PER_MEGABYTE - 1) / BYTES_PER_MEGABYTE).toInt()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (item.errorMessage != null) {
+                Text(
+                    text = item.errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            when {
+                item.isDownloading -> {
+                    LinearProgressIndicator(
+                        progress = { item.downloadProgress },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text = stringResource(R.string.model_download_progress, (item.downloadProgress * 100).toInt()),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Button(onClick = onCancelDownload, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.model_cancel_download))
+                    }
+                }
+
+                item.isInstalled -> Button(
+                    onClick = onRemove,
+                    enabled = !item.isDeleting,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(if (item.isDeleting) R.string.model_removing else R.string.model_remove))
+                }
+
+                else -> Button(onClick = onInstall, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.model_install))
                 }
             }
         }
     }
 }
+
+private const val BYTES_PER_MEGABYTE = 1024L * 1024L

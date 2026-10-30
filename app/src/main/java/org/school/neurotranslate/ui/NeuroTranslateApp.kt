@@ -120,7 +120,12 @@ fun NeuroTranslateApp() {
                         }
 
                         is ModelCatalogDestination -> NavEntry(destination) {
-                            ModelCatalogScreen(state = modelCatalogState)
+                            ModelCatalogScreen(
+                                state = modelCatalogState,
+                                onInstall = modelCatalogViewModel::onInstall,
+                                onCancelDownload = modelCatalogViewModel::onCancelDownload,
+                                onRemove = modelCatalogViewModel::onRemove
+                            )
                         }
 
                         is SettingsDestination -> NavEntry(destination) {
