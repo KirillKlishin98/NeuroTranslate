@@ -3,32 +3,22 @@ package org.school.neurotranslate.ui.catalog
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import java.io.File
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.school.neurotranslate.R
-import org.school.neurotranslate.translation.FileSystemModelRepository
-import org.school.neurotranslate.translation.MarianOnnxEngine
-import org.school.neurotranslate.translation.ModelCatalog
-import org.school.neurotranslate.translation.OnnxModelPackageValidator
-import org.school.neurotranslate.translation.ResumableModelDownloadService
+import org.school.neurotranslate.translation.ModelDownloadRuntime
+import org.school.neurotranslate.translation.ModelDownloadScheduler
 import org.school.neurotranslate.translation.TranslationService
+import org.school.neurotranslate.translation.onnx.MarianOnnxEngine
 
 class ModelCatalogViewModel(application: Application) : AndroidViewModel(application) {
-    private val catalog = ModelCatalog.fromAssets(application.assets)
-    private val modelRepository = FileSystemModelRepository(
-        rootDirectory = File(application.filesDir, MODEL_STORAGE_DIRECTORY),
-        catalog = catalog
-    )
-    private val downloadService = ResumableModelDownloadService(
-        catalog = catalog,
-        modelRepository = modelRepository,
-        validator = OnnxModelPackageValidator()
-    )
+    private val downloadRuntime = ModelDownloadRuntime.get(application)
+    private val catalog = downloadRuntime.catalog
+    private val modelRepository = downloadRuntime.repository
     private val translationService = TranslationService(
         engine = MarianOnnxEngine(),
         modelRepository = modelRepository
@@ -47,43 +37,53 @@ class ModelCatalogViewModel(application: Application) : AndroidViewModel(applica
         })
     )
     val uiState = _uiState.asStateFlow()
-
-    private var currentDownload: Job? = null
+    private val refreshedDownloads = mutableSetOf<String>()
 
     init {
         refreshInstalledModels()
+        viewModelScope.launch {
+            downloadRuntime.status.collect { statuses ->
+                _uiState.update { state ->
+                    state.copy(items = state.items.map { item ->
+                        val status = statuses[item.id] ?: return@map item
+                        item.copy(
+                            isDownloading = status.isRunning,
+                            downloadProgress = status.progress,
+                            errorMessage = if (status.error) getApplication<Application>().getString(R.string.model_download_failed) else null
+                        )
+                    })
+                }
+                val newlyCompleted = statuses.filterValues { !it.isRunning && it.progress >= 1f }
+                    .keys.any(refreshedDownloads::add)
+                if (newlyCompleted) {
+                    refreshInstalledModels()
+                }
+            }
+        }
     }
 
     fun onInstall(modelId: String) {
-        if (currentDownload?.isActive == true) return
-        currentDownload = viewModelScope.launch {
-            updateItem(modelId) { it.copy(isDownloading = true, downloadProgress = 0f, errorMessage = null) }
+        if (_uiState.value.items.any { it.isDownloading }) return
+        refreshedDownloads.remove(modelId)
+        updateItem(modelId) { it.copy(isDownloading = true, downloadProgress = 0f, errorMessage = null) }
+        viewModelScope.launch {
             try {
-                downloadService.downloadModel(modelId) { progress ->
-                    updateItem(modelId) { it.copy(downloadProgress = progress.fraction) }
-                }
-                updateItem(modelId) { it.copy(isDownloading = false, isInstalled = true, downloadProgress = 1f) }
-            } catch (cancellation: CancellationException) {
-                updateItem(modelId) { it.copy(isDownloading = false) }
-                throw cancellation
+                ModelDownloadScheduler.enqueue(getApplication(), modelId)
             } catch (failure: Exception) {
                 updateItem(modelId) {
                     it.copy(isDownloading = false, errorMessage = getApplication<Application>().getString(R.string.model_download_failed))
                 }
-            } finally {
-                currentDownload = null
-                refreshInstalledModels()
             }
         }
     }
 
     fun onCancelDownload(modelId: String) {
         if (_uiState.value.items.none { it.id == modelId && it.isDownloading }) return
-        currentDownload?.cancel()
+        ModelDownloadScheduler.cancel(getApplication(), modelId)
     }
 
     fun onRemove(modelId: String) {
-        if (currentDownload?.isActive == true) return
+        if (_uiState.value.items.any { it.id == modelId && it.isDownloading }) return
         viewModelScope.launch {
             updateItem(modelId) { it.copy(isDeleting = true, errorMessage = null) }
             try {
@@ -131,7 +131,6 @@ class ModelCatalogViewModel(application: Application) : AndroidViewModel(applica
     }
 
     private companion object {
-        const val MODEL_STORAGE_DIRECTORY = "models"
         const val BYTES_PER_MEGABYTE = 1024L * 1024L
     }
 }

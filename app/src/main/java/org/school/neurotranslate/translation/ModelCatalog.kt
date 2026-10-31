@@ -2,6 +2,7 @@ package org.school.neurotranslate.translation
 
 import android.content.res.AssetManager
 import java.io.File
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -18,6 +19,7 @@ class ModelCatalog private constructor(
     companion object {
         private val json = Json { ignoreUnknownKeys = true }
 
+        @OptIn(ExperimentalSerializationApi::class)
         fun fromAssets(assets: AssetManager): ModelCatalog {
             val document = assets.open(CATALOG_ASSET).use {
                 json.decodeFromStream<ModelCatalogDocument>(it)
