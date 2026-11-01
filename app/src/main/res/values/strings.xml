@@ -48,7 +48,7 @@
     <string name="settings_translation">Перевод</string>
     <string name="max_output_length">Максимальная длина результата</string>
     <string name="max_output_length_value">%1$d токенов</string>
-    <string name="settings_note">Настройки сохраняются только на время работы приложения.</string>
+    <string name="settings_note">Тема и длина результата сохраняются на устройстве.</string>
     <string name="clear_text">Очистить текст</string>
     <string name="no_text_to_translate">Сначала введите текст.</string>
     <string name="active_model_not_available">Для этой пары пока нет установленной модели.</string>

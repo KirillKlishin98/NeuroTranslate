@@ -55,9 +55,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.onnxruntime.android)
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.datastore.preferences)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
 }

@@ -8,8 +8,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.security.MessageDigest
-import java.util.Locale
 import java.util.Properties
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -80,7 +78,7 @@ class ResumableModelDownloadService(
         val partial = File(destination.parentFile, "${destination.name}.part")
         val validatorFile = validatorFile(staging, artifact.path)
         destination.parentFile?.let { if (!it.exists() && !it.mkdirs()) throw IOException("Could not create staging folder.") }
-        if (destination.isFile && destination.length() == artifact.sizeBytes && sha256(destination) == artifact.sha256) return
+        if (ArtifactDigest.matches(destination, artifact.sizeBytes, artifact.sha256)) return
         if (destination.exists() && !destination.delete()) throw IOException("Could not replace incomplete artifact.")
 
         val savedValidator = readValidator(validatorFile)
@@ -138,7 +136,7 @@ class ResumableModelDownloadService(
         if (!partial.isFile || partial.length() != artifact.sizeBytes) {
             throw EOFException("Download of ${artifact.path} is incomplete; retry to resume it.")
         }
-        if (sha256(partial) != artifact.sha256) {
+        if (!ArtifactDigest.matches(partial, artifact.sizeBytes, artifact.sha256)) {
             deleteIfPresent(partial)
             deleteIfPresent(validatorFile)
             throw ModelDownloadException.Integrity(model.id, artifact.path)
@@ -147,7 +145,7 @@ class ResumableModelDownloadService(
         deleteIfPresent(validatorFile)
     }
 
-    private fun openConnection(url: String, offset: Long, validator: ResumeValidator?): HttpURLConnection =
+    private fun openConnection(url: String, offset: Long, validator: DownloadResumeValidator?): HttpURLConnection =
         (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = CONNECT_TIMEOUT_MILLIS
             readTimeout = READ_TIMEOUT_MILLIS
@@ -166,20 +164,16 @@ class ResumableModelDownloadService(
         connection: HttpURLConnection,
         offset: Long,
         artifact: ModelArtifactSpec,
-        saved: ResumeValidator?
+        saved: DownloadResumeValidator?
     ): Boolean {
-        if (saved == null) return false
-        val range = CONTENT_RANGE.matchEntire(connection.getHeaderField("Content-Range") ?: "") ?: return false
-        val actualValidator = responseValidator(connection)
-        val validatorMatches = if (saved.etag != null) {
-            actualValidator?.etag == saved.etag
-        } else {
-            actualValidator?.lastModified == saved.lastModified
-        }
-        return range.groupValues[1].toLongOrNull() == offset &&
-            range.groupValues[2].toLongOrNull() == artifact.sizeBytes - 1L &&
-            range.groupValues[3].toLongOrNull() == artifact.sizeBytes &&
-            validatorMatches
+        return DownloadRangePolicy.accepts(
+            statusCode = connection.responseCode,
+            contentRange = connection.getHeaderField("Content-Range"),
+            offset = offset,
+            expectedSize = artifact.sizeBytes,
+            savedValidator = saved,
+            responseValidator = responseValidator(connection)
+        )
     }
 
     private fun validateFullResponse(connection: HttpURLConnection, artifact: ModelArtifactSpec) {
@@ -188,16 +182,16 @@ class ResumableModelDownloadService(
         if (contentLength >= 0L && contentLength != artifact.sizeBytes) throw IOException("Unexpected content length for ${artifact.path}.")
     }
 
-    private fun responseValidator(connection: HttpURLConnection) = ResumeValidator(
+    private fun responseValidator(connection: HttpURLConnection) = DownloadResumeValidator(
         etag = connection.getHeaderField("ETag")?.takeIf(String::isNotBlank),
         lastModified = connection.getHeaderField("Last-Modified")?.takeIf(String::isNotBlank)
     ).takeIf { it.etag != null || it.lastModified != null }
 
-    private fun readValidator(file: File): ResumeValidator? {
+    private fun readValidator(file: File): DownloadResumeValidator? {
         if (!file.isFile) return null
         val properties = Properties()
         FileInputStream(file).use(properties::load)
-        return ResumeValidator(
+        return DownloadResumeValidator(
             etag = properties.getProperty(ETAG_KEY),
             lastModified = properties.getProperty(LAST_MODIFIED_KEY)
         ).takeIf { it.etag != null || it.lastModified != null }
@@ -228,19 +222,6 @@ class ResumableModelDownloadService(
         return child
     }
 
-    private fun sha256(file: File): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        FileInputStream(file).use { input ->
-            val buffer = ByteArray(HASH_BUFFER_BYTES)
-            while (true) {
-                val read = input.read(buffer)
-                if (read < 0) break
-                digest.update(buffer, 0, read)
-            }
-        }
-        return digest.digest().joinToString("") { "%02x".format(Locale.ROOT, it) }
-    }
-
     private fun checkAvailableSpace(model: ModelPackageSpec, staging: File) {
         val reusableBytes = model.artifacts.sumOf { artifact ->
             val destination = childFile(staging, artifact.path)
@@ -260,19 +241,15 @@ class ResumableModelDownloadService(
         if (file.exists() && !file.delete()) throw IOException("Could not remove ${file.name}.")
     }
 
-    private data class ResumeValidator(val etag: String?, val lastModified: String?)
-
     private companion object {
         const val CONNECT_TIMEOUT_MILLIS = 20_000
         const val READ_TIMEOUT_MILLIS = 30_000
         const val TRANSFER_BUFFER_BYTES = 128 * 1024
-        const val HASH_BUFFER_BYTES = 64 * 1024
         const val STORAGE_SAFETY_BYTES = 16L * 1024 * 1024
         const val ETAG_KEY = "etag"
         const val LAST_MODIFIED_KEY = "lastModified"
         const val RESUME_DIRECTORY = ".resume"
         const val USER_AGENT = "NeuroTranslate/1.0"
-        val CONTENT_RANGE = Regex("bytes (\\d+)-(\\d+)/(\\d+)")
     }
 }
 
