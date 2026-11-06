@@ -94,13 +94,33 @@ fun TranslationScreen(
 
             FilledTonalButton(
                 onClick = onTranslate,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isCheckingModel
             ) {
-                Text(stringResource(R.string.translate_action))
+                Text(
+                    if (state.isCheckingModel) stringResource(R.string.checking_model)
+                    else stringResource(R.string.translate_action)
+                )
             }
 
             if (state.showModelPrompt) {
                 ModelRequiredCard(onOpenCatalog = onOpenCatalog)
+            }
+
+            if (state.showTranslationUnavailable) {
+                Text(
+                    text = stringResource(R.string.translation_runtime_unavailable),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (state.showModelStatusError) {
+                Text(
+                    text = stringResource(R.string.model_status_check_failed),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
             OutlinedCard(modifier = Modifier.fillMaxWidth()) {

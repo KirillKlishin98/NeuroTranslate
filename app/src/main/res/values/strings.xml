@@ -17,6 +17,9 @@
     <string name="input_text_hint">Введите текст для перевода</string>
     <string name="characters_count">Символов: %1$d</string>
     <string name="translate_action">Перевести</string>
+    <string name="checking_model">Проверяем языковой пакет…</string>
+    <string name="translation_runtime_unavailable">Пакет установлен. Перевод пока недоступен: токенизатор ещё не подключён.</string>
+    <string name="model_status_check_failed">Не удалось проверить пакет на устройстве. Откройте каталог моделей и повторите попытку.</string>
     <string name="translation_result">Результат</string>
     <string name="translation_result_placeholder">Здесь появится перевод</string>
     <string name="model_required_title">Нужна языковая модель</string>
